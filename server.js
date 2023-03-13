@@ -14,21 +14,15 @@ const iv = crypto.randomBytes(16);
 io.on('connection', (socket) => {
     console.log('a user connected');
 
-    // Handle incoming chat messages
-    // socket.on('chat message', (message) => {
-    //     // Encrypt the message using the AES key
-    //     let aes_encrypted = cipher.update(message, 'utf8', 'base64');
-    //     aes_encrypted += cipher.final('base64');
-
-    //     console.log('encrypted message: ' + aes_encrypted);
-
-    //     // Broadcast the encrypted message to all connected clients
-    //     io.emit('chat message', aes_encrypted);
-    // });
+    // Handle incoming new user event
+    socket.on("new user", (username) => {
+        console.log(`User ${username} connected`);
+        socket.username = username;
+    });
 
     // Handle incoming chat messages
     socket.on('chat message', (message) => {
-
+        const username = socket.username;
         // Create a Cipher object with the AES algorithm and CBC mode
         const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(encryptionKey), iv);
 
@@ -36,7 +30,7 @@ io.on('connection', (socket) => {
         let aes_encrypted = cipher.update(message, 'utf8', 'base64');
         aes_encrypted += cipher.final('base64');
 
-        console.log('encrypted message: ' + aes_encrypted);
+        // console.log('encrypted message: ' + aes_encrypted);
 
 
         //RSA stuff
@@ -70,7 +64,7 @@ io.on('connection', (socket) => {
             Buffer.from(RSAmessage)
         );
 
-        console.log("\nRSA Encrypted data:", encryptedData.toString("base64"));
+        // console.log("\nRSA Encrypted data:", encryptedData.toString("base64"));
 
         const decryptedData = crypto.privateDecrypt(
             {
@@ -81,7 +75,7 @@ io.on('connection', (socket) => {
             encryptedData
         );
 
-        console.log("\nRSA Decrypted data:", decryptedData.toString());
+        // console.log("\nRSA Decrypted data:", decryptedData.toString());
 
         // Create a Decipher object with the AES algorithm and CBC mode
         const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encryptionKey), iv);
@@ -93,7 +87,8 @@ io.on('connection', (socket) => {
         console.log('decrypted message: ' + aes_decrypted);
 
         // Broadcast both the encrypted and decrypted messages to all connected clients
-        io.emit('chat message', { encrypted: aes_encrypted, decrypted: aes_decrypted });
+        // io.emit('chat message', { encrypted: aes_encrypted, decrypted: aes_decrypted });
+        io.emit("chat message", { username: username, decrypted: aes_decrypted });
     });
 
     // Handle socket disconnections
